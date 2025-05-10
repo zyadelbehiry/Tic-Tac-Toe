@@ -10,6 +10,7 @@ export default function Home() {
   const [isXNext, setIsXNext] = useState(true);
   const [vsComputer, setVsComputer] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
+  const [computerThinking, setComputerThinking] = useState(false);
 
   const calculateWinner = (squares: Board): Square => {
     const lines = [
@@ -77,7 +78,8 @@ export default function Home() {
   };
 
   const handleClick = (i: number): void => {
-    if (calculateWinner(board) || board[i]) return;
+    // Prevent clicks if the computer is thinking or if the square is already filled
+    if (calculateWinner(board) || board[i] || (vsComputer && !isXNext) || computerThinking) return;
 
     const newBoard = board.slice();
     newBoard[i] = isXNext ? "X" : "O";
@@ -93,6 +95,7 @@ export default function Home() {
     if (vsComputer) {
       if (!winner && !isDraw) {
         setIsXNext(false);
+        setComputerThinking(true); // Set computer thinking state to true
         setTimeout(() => {
           const computerMove = getComputerMove(newBoard);
           if (computerMove !== -1) {
@@ -109,6 +112,7 @@ export default function Home() {
               setTimeout(() => setShowPopup(true), 500);
             }
           }
+          setComputerThinking(false); // Set computer thinking state back to false
         }, 500);
       }
     } else {
@@ -121,12 +125,15 @@ export default function Home() {
     ? `Winner: ${winner}`
     : board.every((square) => square)
     ? "Game is a draw!"
+    : computerThinking
+    ? "Computer is thinking..."
     : `Next player: ${isXNext ? "X" : "O"}`;
 
   const resetGame = (): void => {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
     setShowPopup(false);
+    setComputerThinking(false);
   };
 
   const toggleGameMode = () => {
@@ -184,12 +191,14 @@ export default function Home() {
             <motion.button
               key={i}
               onClick={() => handleClick(i)}
-              className="bg-white/5 backdrop-blur-lg h-24 text-4xl font-bold rounded-lg hover:bg-white/10 transition-all"
+              className={`bg-white/5 backdrop-blur-lg h-24 text-4xl font-bold rounded-lg transition-all ${
+                vsComputer && !isXNext || computerThinking ? "cursor-not-allowed opacity-80" : "hover:bg-white/10"
+              }`}
               whileHover={{
-                scale: 1.05,
-                backgroundColor: "rgba(255,255,255,0.15)",
+                scale: vsComputer && !isXNext || computerThinking ? 1 : 1.05,
+                backgroundColor: vsComputer && !isXNext || computerThinking ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.15)",
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: vsComputer && !isXNext || computerThinking ? 1 : 0.95 }}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
